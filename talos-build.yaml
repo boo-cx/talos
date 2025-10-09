@@ -1,0 +1,136 @@
+name: Build custom Talos installers with custom System Extensions
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: [installer, iso]
+
+    env:
+      SYSTEM_EXTENSION: talos-bird-extension
+      SYSTEM_EXTENSION_TAG: ${{ github.ref_name }}
+      TALOS_VERSION: v1.11.0
+      ARCH: amd64
+
+      NODE_CIDR: fd04:9400:3159:40::/64
+      POD_CIDR: fd04:9400:3159:50::/64
+      SERVICE_CIDR: fd04:9400:3159:60::/64
+      REDIST_PREFIX: fd04:9400:3159::/48
+      OSPF6_AREA: 40
+      AS_NUMBER: 65000
+
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Update System Extension manifest version
+        run: |
+          sed -i "s/{{ .VERSION }}/${{ env.SYSTEM_EXTENSION_TAG }}/" manifest.yaml
+
+      - name: Set up Docker Buildx with host networking to allow connectivity to temporary registry
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver-opts: network=host
+
+      - name: Build Talos BIRD System Extension; push to temporary registry
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: "localhost:5000/${{ env.SYSTEM_EXTENSION }}:${{ env.SYSTEM_EXTENSION_TAG}}"
+
+      - name: Prepare output directory
+        run: mkdir -p _out/${{ matrix.variant }}
+
+      - name: "Build Talos image: ${{ matrix.variant }}"
+        run: |
+          # Configure static addressing for edge node only
+          if [ "${{ matrix.variant }}" = "iso" ]; then
+            PLATFORM_CONFIG="--meta=0xa=$(cat ./platform/metal-edge.yaml)"
+          # Set only NTP and DNS servers for other nodes
+          elif [ "${{ matrix.variant }}" = "secureboot" ]; then
+            PLATFORM_CONFIG="--meta=0xa=$(cat ./platform/metal-home.yaml)"
+          # The installer target does not accept --meta argument
+          elif [ "${{ matrix.variant }}" = "installer" ]; then
+            :
+          fi
+
+          docker run --rm -t \
+            -v /dev:/dev \
+            -v $PWD/_out/${{ matrix.variant }}:/out \
+            -v $PWD/_out:/secureboot:ro \
+            --privileged --network host \
+            ghcr.io/siderolabs/imager:${{ env.TALOS_VERSION }} \
+            --arch "${{ env.ARCH }}" \
+            --extra-kernel-arg net.ifnames=0 \
+            --extra-kernel-arg ip=:::::eth0:off \
+            --extra-kernel-arg ip=:::::eth1:off \
+            --extra-kernel-arg talos.environment=NODE_CIDR=${{ env.NODE_CIDR }} \
+            --extra-kernel-arg talos.environment=POD_CIDR=${{ env.POD_CIDR }} \
+            --extra-kernel-arg talos.environment=SERVICE_CIDR=${{ env.SERVICE_CIDR }} \
+            --extra-kernel-arg talos.environment=REDIST_PREFIX=${{ env.REDIST_PREFIX }} \
+            --extra-kernel-arg talos.environment=OSPF6_AREA=${{ env.OSPF6_AREA }} \
+            --extra-kernel-arg talos.environment=AS_NUMBER=${{ env.AS_NUMBER }} \
+            --platform=metal \
+            ${PLATFORM_CONFIG+"$PLATFORM_CONFIG"} \
+            --system-extension-image "ghcr.io/siderolabs/intel-ucode:20250812" \
+            --system-extension-image "localhost:5000/${{ env.SYSTEM_EXTENSION }}:${{ env.SYSTEM_EXTENSION_TAG }}" \
+            ${{ matrix.variant }}
+
+      - name: Push installer image to GHCR
+        if: matrix.variant == 'installer'
+        run: |
+          INSTALLER_FILE="_out/installer/installer-amd64.tar"
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/installer-amd64:${{ env.TALOS_VERSION }}"
+
+          echo "Uploading $INSTALLER_FILE to $IMAGE_NAME"
+
+          # Install crane
+          go install github.com/google/go-containerregistry/cmd/crane@latest
+          export PATH="$PATH:$(go env GOPATH)/bin"
+
+          # Authenticate with GHCR
+          echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+          # Push the Talos installer image
+          crane push "$INSTALLER_FILE" "$IMAGE_NAME"
+
+      - name: Upload Talos image artifact
+        uses: actions/upload-artifact@v4
+        with:
+         name: ${{ matrix.variant }}
+         path: _out/${{ matrix.variant }}
+
+  release:
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all image artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_artifacts
+
+      - name: Upload built images to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release_artifacts/**/*
+          token: ${{ secrets.GITHUB_TOKEN }}

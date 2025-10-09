@@ -1,0 +1,15 @@
+# This metal platform config sets the upstream DNS and NTP servers.
+#
+# Config is applied to the installer image via the kernel cmdline and written to the META partition on
+# installation. This ensures parameters are set both before and after installation.
+#
+# Post-installation changes to these parameters requires altering the META partition using Talos API.
+
+resolvers:
+  - dnsServers:
+      - 'fd04:9400:3159::1'
+    layer: platform
+timeServers:
+  - timeServers:
+      - 'time.boo.cx'
+    layer: platform

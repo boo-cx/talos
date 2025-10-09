@@ -1,0 +1,44 @@
+# This metal platform config sets the upstream DNS and NTP servers and configures static addressing.
+#
+# The eth1 MTU is set to 1450 to per BinaryLane requirement.
+#
+# Config is applied to the installer image via the kernel cmdline and written to the META partition on
+# installation. This ensures parameters are set both before and after installation.
+#
+# Post-installation changes to these parameters requires altering the META partition using Talos API.
+
+resolvers:
+  - dnsServers:
+      - 'fd04:9400:3159::1'
+    layer: platform
+timeServers:
+  - timeServers:
+      - 'time.boo.cx'
+    layer: platform
+addresses:
+  - family: inet4
+    address: '45.124.54.200/24'
+    linkName: eth0
+    scope: global
+    flags: permanent
+    layer: platform
+  - family: inet6
+    address: 'fd04:9400:3159:40:216:3eff:fee1:5124/128'
+    linkName: eth1
+    scope: global
+    flags: permanent
+    layer: platform
+links:
+  - name: eth1
+    up: true 
+    mtu: 1450
+    layer: platform
+routes:
+  - family: inet4
+    gateway: '45.124.54.1'
+    outLinkName: eth0
+    table: main
+    scope: global
+    type: unicast
+    protocol: static
+    layer: platform
