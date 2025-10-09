@@ -18,8 +18,6 @@ jobs:
         variant: [installer, iso]
 
     env:
-      SYSTEM_EXTENSION: talos-bird-extension
-      SYSTEM_EXTENSION_TAG: ${{ github.ref_name }}
       TALOS_VERSION: v1.11.0
       ARCH: amd64
 
@@ -30,45 +28,23 @@ jobs:
       OSPF6_AREA: 40
       AS_NUMBER: 65000
 
-    services:
-      registry:
-        image: registry:2
-        ports:
-          - 5000:5000
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-
-      - name: Update System Extension manifest version
-        run: |
-          sed -i "s/{{ .VERSION }}/${{ env.SYSTEM_EXTENSION_TAG }}/" manifest.yaml
-
-      - name: Set up Docker Buildx with host networking to allow connectivity to temporary registry
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver-opts: network=host
-
-      - name: Build Talos BIRD System Extension; push to temporary registry
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: "localhost:5000/${{ env.SYSTEM_EXTENSION }}:${{ env.SYSTEM_EXTENSION_TAG}}"
 
       - name: Prepare output directory
         run: mkdir -p _out/${{ matrix.variant }}
 
       - name: "Build Talos image: ${{ matrix.variant }}"
         run: |
-          # Configure static addressing for edge node only
           if [ "${{ matrix.variant }}" = "iso" ]; then
+            # ISO should be built for edge node only, and requires static network addressing
             PLATFORM_CONFIG="--meta=0xa=$(cat ./platform/metal-edge.yaml)"
-          # Set only NTP and DNS servers for other nodes
           elif [ "${{ matrix.variant }}" = "secureboot" ]; then
+            # Other nodes require DNS and NTP set only
             PLATFORM_CONFIG="--meta=0xa=$(cat ./platform/metal-home.yaml)"
-          # The installer target does not accept --meta argument
           elif [ "${{ matrix.variant }}" = "installer" ]; then
+            # "installer" target does not accept --meta argument
             :
           fi
 
@@ -76,7 +52,6 @@ jobs:
             -v /dev:/dev \
             -v $PWD/_out/${{ matrix.variant }}:/out \
             -v $PWD/_out:/secureboot:ro \
-            --privileged --network host \
             ghcr.io/siderolabs/imager:${{ env.TALOS_VERSION }} \
             --arch "${{ env.ARCH }}" \
             --extra-kernel-arg net.ifnames=0 \
@@ -91,7 +66,7 @@ jobs:
             --platform=metal \
             ${PLATFORM_CONFIG+"$PLATFORM_CONFIG"} \
             --system-extension-image "ghcr.io/siderolabs/intel-ucode:20250812" \
-            --system-extension-image "localhost:5000/${{ env.SYSTEM_EXTENSION }}:${{ env.SYSTEM_EXTENSION_TAG }}" \
+            --system-extension-image "ghcr.io/boo-cx/talos-bird-extension:${{ env.SYSTEM_EXTENSION_TAG }}" \
             ${{ matrix.variant }}
 
       - name: Push installer image to GHCR
@@ -99,8 +74,6 @@ jobs:
         run: |
           INSTALLER_FILE="_out/installer/installer-amd64.tar"
           IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/installer-amd64:${{ env.TALOS_VERSION }}"
-
-          echo "Uploading $INSTALLER_FILE to $IMAGE_NAME"
 
           # Install crane
           go install github.com/google/go-containerregistry/cmd/crane@latest
