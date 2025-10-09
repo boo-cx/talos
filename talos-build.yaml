@@ -43,6 +43,8 @@ jobs:
             :
           fi
 
+          EXTENSIONS_ARGS=$(yq -r '.systemExtensions[].image | "--system-extension-image " + @sh' system-extensions.yaml | xargs)
+
           docker run --rm -t \
             -v /dev:/dev \
             -v $PWD/_out/${{ matrix.variant }}:/out \
@@ -60,8 +62,7 @@ jobs:
             --extra-kernel-arg talos.environment=AS_NUMBER=${{ env.AS_NUMBER }} \
             --platform=metal \
             ${PLATFORM_CONFIG+"$PLATFORM_CONFIG"} \
-            --system-extension-image "ghcr.io/siderolabs/intel-ucode:20250812" \
-            --system-extension-image "ghcr.io/boo-cx/talos-bird-extension:${{ env.SYSTEM_EXTENSION_TAG }}" \
+            $EXTENSIONS_ARGS
             ${{ matrix.variant }}
 
       - name: Push installer image to GHCR
