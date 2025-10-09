@@ -1,4 +1,4 @@
-name: Build custom Talos installers with custom System Extensions
+name: Build custom Talos installer and boot media with custom System Extensions
 
 on:
   workflow_dispatch:
@@ -24,11 +24,11 @@ jobs:
       - name: Prepare output directory
         run: mkdir -p _out/${{ matrix.variant }}
 
-      - name: Load BIRD configuration variables
+      - name: Load configuration variables
         run: |
           while IFS='=' read -r key value; do
             echo "${key}=${value}" >> $GITHUB_ENV
-          done < ./bird.env        
+          done < *.env        
 
       - name: "Build Talos image: ${{ matrix.variant }}"
         run: |
