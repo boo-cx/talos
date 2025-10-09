@@ -1,0 +1,3 @@
+systemExtensions:
+ - image: ghcr.io/siderolabs/intel-ucode:20250812
+ - image: ghcr.io/boo-cx/talos-bird-extension:v2.15.1
