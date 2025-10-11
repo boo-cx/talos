@@ -30,6 +30,16 @@ jobs:
             echo "${key}=${value}" >> $GITHUB_ENV
           done < *.env
 
+      - name: Determine platform config
+        run: |
+          PLATFORM_CONFIG=""
+          if [ "${{ matrix.variant }}" = "iso" ]; then
+            PLATFORM_CONFIG="--meta=0xa=$(cat ./platform/metal-edge.yaml)"
+          elif [ "${{ matrix.variant }}" = "secureboot" ]; then
+            PLATFORM_CONFIG="--meta=0xa=$(cat ./platform/metal-home.yaml)"
+          fi
+          echo "PLATFORM_CONFIG=$PLATFORM_CONFIG" >> $GITHUB_ENV
+
       - name: Read list of System Extensions
         run: |
           EXTENSIONS=""
@@ -52,17 +62,6 @@ jobs:
 
       - name: "Build Talos image: ${{ matrix.variant }}"
         run: |
-          if [ "${{ matrix.variant }}" = "iso" ]; then
-            # ISO should be built for edge node only, and requires static network addressing as well as DNS and NTP
-            PLATFORM_CONFIG="--meta=0xa=$(cat ./platform/metal-edge.yaml)"
-          elif [ "${{ matrix.variant }}" = "secureboot" ]; then
-            # Other nodes require DNS and NTP set only
-            PLATFORM_CONFIG="--meta=0xa=$(cat ./platform/metal-home.yaml)"
-          elif [ "${{ matrix.variant }}" = "installer" ]; then
-            # installer target does not accept --meta argument - specific arguments are inherited from boot media if supported
-            :
-          fi
-
           docker run --rm -t \
             -v /dev:/dev \
             -v $PWD/_out/${{ matrix.variant }}:/out \
