@@ -24,7 +24,7 @@ jobs:
       - name: Prepare output directory
         run: mkdir -p _out/${{ matrix.variant }}
 
-      - name: Load configuration variables
+      - name: Load build variables
         run: |
           while IFS='=' read -r key value; do
             echo "${key}=${value}" >> $GITHUB_ENV
@@ -56,7 +56,7 @@ jobs:
           fi
           echo "EXTENSIONS=$EXTENSIONS" >> $GITHUB_ENV
 
-      - name: Extract environment args from ExtensionServiceConfig YAMLs
+      - name: Extract environment variables from ExtensionServiceConfig YAMLs
         run: |
           EXTENSIONS_ENV=""
           for file in  ./extensions/*.yaml; do
