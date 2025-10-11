@@ -54,7 +54,7 @@ jobs:
           if [ -f ./extensions/system-extensions.yaml ]; then
             EXTENSIONS=$(yq -r '.systemExtensions[] | "--system-extension-image " + @sh' system-extensions.yaml | xargs)
           fi
-          echo "EXTENSIONS=$EXT" >> $GITHUB_ENV
+          echo "EXTENSIONS=$EXTENSIONS" >> $GITHUB_ENV
 
       - name: Extract environment args from ExtensionServiceConfig YAMLs
         run: |
