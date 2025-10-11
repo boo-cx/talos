@@ -30,6 +30,14 @@ jobs:
             echo "${key}=${value}" >> $GITHUB_ENV
           done < *.env
 
+      - name: Set static extra kernel args
+        run: |
+          EXTRA_KERNEL_ARGS="\
+            --extra-kernel-arg net.ifnames=0 \
+            --extra-kernel-arg ip=:::::eth0:off \
+            --extra-kernel-arg ip=:::::eth1:off"
+          echo "EXTRA_KERNEL_ARGS=$EXTRA_KERNEL_ARGS" >> $GITHUB_ENV
+
       - name: Determine platform config
         run: |
           PLATFORM_CONFIG=""
@@ -70,9 +78,7 @@ jobs:
             --arch "${{ env.ARCH }}" \
             --platform=metal \
             ${PLATFORM_CONFIG+"$PLATFORM_CONFIG"} \
-            --extra-kernel-arg net.ifnames=0 \
-            --extra-kernel-arg ip=:::::eth0:off \
-            --extra-kernel-arg ip=:::::eth1:off \
+            $STATIC_KERNEL_ARGS \
             $EXTENSIONS \
             $EXTENSIONS_ENV \
             ${{ matrix.variant }}
