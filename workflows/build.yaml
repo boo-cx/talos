@@ -1,4 +1,4 @@
-name: Build custom Talos installer and boot media with custom System Extensions
+name: Build custom Talos installer and boot media with custom System Extensions and customisations to platform config
 
 on:
   workflow_dispatch:
