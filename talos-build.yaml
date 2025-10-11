@@ -32,11 +32,10 @@ jobs:
 
       - name: Read list of System Extensions
         run: |
+          EXTENSIONS=""
           if [ -f system-extensions.yaml ]; then
-            EXT=$(yq -r '.systemExtensions[] | "--system-extension-image " + @sh' system-extensions.yaml | xargs)
+            EXTENSIONS=$(yq -r '.systemExtensions[] | "--system-extension-image " + @sh' system-extensions.yaml | xargs)
             echo "EXTENSIONS=$EXT" >> $GITHUB_ENV
-          else
-            echo "EXTENSIONS=" >> $GITHUB_ENV
           fi
 
       - name: Extract environment args from ExtensionServiceConfig YAMLs
