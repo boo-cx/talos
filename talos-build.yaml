@@ -28,7 +28,29 @@ jobs:
         run: |
           while IFS='=' read -r key value; do
             echo "${key}=${value}" >> $GITHUB_ENV
-          done < *.env        
+          done < *.env
+
+      - name: Read list of System Extensions
+        run: |
+          if [ -f system-extensions.yaml ]; then
+            EXT=$(yq -r '.systemExtensions[] | "--system-extension-image " + @sh' system-extensions.yaml | xargs)
+            echo "EXTENSIONS=$EXT" >> $GITHUB_ENV
+          else
+            echo "EXTENSIONS=" >> $GITHUB_ENV
+          fi
+
+      - name: Extract environment args from ExtensionServiceConfig YAMLs
+        run: |
+          EXTENSIONS_ENV=""
+          for file in *.yaml; do
+            if [ -f "$file" ] && [ "$(yq -r '.kind' "$file")" = "ExtensionServiceConfig" ]; then
+              while IFS= read -r line; do
+                EXTENSIONS_ENV+="--extra-kernel-arg talos.environment=$line "
+              done < <(yq -r '.environment[]?' "$file")
+            fi
+          done
+
+          echo "EXTENSIONS_ENV=$EXTENSIONS_ENV" >> $GITHUB_ENV
 
       - name: "Build Talos image: ${{ matrix.variant }}"
         run: |
@@ -43,8 +65,6 @@ jobs:
             :
           fi
 
-          EXTENSIONS_ARGS=$(yq -r '.systemExtensions[] | "--system-extension-image " + @sh' system-extensions.yaml | xargs)
-
           docker run --rm -t \
             -v /dev:/dev \
             -v $PWD/_out/${{ matrix.variant }}:/out \
@@ -54,15 +74,10 @@ jobs:
             --extra-kernel-arg net.ifnames=0 \
             --extra-kernel-arg ip=:::::eth0:off \
             --extra-kernel-arg ip=:::::eth1:off \
-            --extra-kernel-arg talos.environment=NODE_CIDR=${{ env.NODE_CIDR }} \
-            --extra-kernel-arg talos.environment=POD_CIDR=${{ env.POD_CIDR }} \
-            --extra-kernel-arg talos.environment=SERVICE_CIDR=${{ env.SERVICE_CIDR }} \
-            --extra-kernel-arg talos.environment=REDIST_PREFIX=${{ env.REDIST_PREFIX }} \
-            --extra-kernel-arg talos.environment=OSPF6_AREA=${{ env.OSPF6_AREA }} \
-            --extra-kernel-arg talos.environment=AS_NUMBER=${{ env.AS_NUMBER }} \
             --platform=metal \
             ${PLATFORM_CONFIG+"$PLATFORM_CONFIG"} \
-            $EXTENSIONS_ARGS
+            $EXTENSIONS \
+            $EXTENSIONS_ENV \
             ${{ matrix.variant }}
 
       - name: Push installer image to GHCR
