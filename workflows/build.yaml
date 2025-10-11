@@ -33,7 +33,7 @@ jobs:
       - name: Read list of System Extensions
         run: |
           EXTENSIONS=""
-          if [ -f system-extensions.yaml ]; then
+          if [ -f ./extensions/system-extensions.yaml ]; then
             EXTENSIONS=$(yq -r '.systemExtensions[] | "--system-extension-image " + @sh' system-extensions.yaml | xargs)
             echo "EXTENSIONS=$EXT" >> $GITHUB_ENV
           fi
@@ -41,7 +41,7 @@ jobs:
       - name: Extract environment args from ExtensionServiceConfig YAMLs
         run: |
           EXTENSIONS_ENV=""
-          for file in *.yaml; do
+          for file in  ./extensions/*.yaml; do
             if [ -f "$file" ] && [ "$(yq -r '.kind' "$file")" = "ExtensionServiceConfig" ]; then
               while IFS= read -r line; do
                 EXTENSIONS_ENV+="--extra-kernel-arg talos.environment=$line "
