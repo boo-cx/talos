@@ -43,7 +43,7 @@ jobs:
             :
           fi
 
-          EXTENSIONS_ARGS=$(yq -r '.systemExtensions[].image | "--system-extension-image " + @sh' system-extensions.yaml | xargs)
+          EXTENSIONS_ARGS=$(yq -r '.systemExtensions[] | "--system-extension-image " + @sh' system-extensions.yaml | xargs)
 
           docker run --rm -t \
             -v /dev:/dev \
