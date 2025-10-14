@@ -31,7 +31,7 @@ jobs:
           done < *.env
 
       - name: Set static extra kernel args
-        run: |
+        run: >
           EXTRA_KERNEL_ARGS="\
             --extra-kernel-arg net.ifnames=0 \
             --extra-kernel-arg ip=:::::eth0:off \
