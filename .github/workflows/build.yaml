@@ -68,7 +68,8 @@ jobs:
 
       - name: "Build Talos image: ${{ matrix.variant }}"
         run: |
-          if [ "${{ matrix.variant }}" != "installer" ]; then
+          VARIANT="${{ matrix.variant }}"
+          if [ $VARIANT != "installer" ]; then
             ARGS+=" $PLATFORM_CONFIG $EXTRA_KERNEL_ARGS $EXTENSIONS $EXTENSIONS_ENV"
           fi
 
