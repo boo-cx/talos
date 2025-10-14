@@ -26,9 +26,7 @@ jobs:
 
       - name: Load build variables
         run: |
-          while IFS='=' read -r key value; do
-            echo "${key}=${value}" >> $GITHUB_ENV
-          done < *.env
+          yq -o props '.' *.env >> $GITHUB_ENV
 
       - name: Set static extra kernel args
         run: >
