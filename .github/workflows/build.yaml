@@ -38,7 +38,7 @@ jobs:
             --extra-kernel-arg ip=:::::eth1:off"
           echo "EXTRA_KERNEL_ARGS=$EXTRA_KERNEL_ARGS" >> $GITHUB_ENV
 
-      - name: Determine platform config
+      - name: Set platform-specific config
         run: |
           PLATFORM_CONFIG=""
           if [ "${{ matrix.variant }}" = "iso" ]; then
@@ -56,7 +56,7 @@ jobs:
           fi
           echo "EXTENSIONS=$EXTENSIONS" >> $GITHUB_ENV
 
-      - name: Extract environment variables from ExtensionServiceConfig YAMLs
+      - name: Extract environment variables from ExtensionServiceConfig YAMLs to facilitate pre-install environment
         run: |
           EXTENSIONS_ENV=""
           for file in  ./extensions/*.yaml; do
@@ -84,18 +84,6 @@ jobs:
             $ARGS
             ${{ matrix.variant }}
 
-      - name: Push installer image to GHCR
-        if: matrix.variant == 'installer'
-        run: |
-          INSTALLER_FILE="_out/installer/installer-amd64.tar"
-          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/installer-amd64:${{ env.TALOS_VERSION }}"
-
-          # Push installer image
-          go install github.com/google/go-containerregistry/cmd/crane@latest
-          export PATH="$PATH:$(go env GOPATH)/bin"
-          echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u "${{ github.actor }}" --password-stdin
-          crane push "$INSTALLER_FILE" "$IMAGE_NAME"
-
       - name: Upload Talos image artifact
         uses: actions/upload-artifact@v4
         with:
@@ -113,7 +101,18 @@ jobs:
         with:
           path: release_artifacts
 
-      - name: Upload built images to GitHub Release
+      - name: Push installer image to GHCR
+        if: matrix.variant == 'installer'
+        run: |
+          INSTALLER_FILE="_out/installer/installer-amd64.tar"
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/installer-amd64:${{ github.ref_name }}"
+
+          go install github.com/google/go-containerregistry/cmd/crane@latest
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u "${{ github.actor }}" --password-stdin
+          crane push "$INSTALLER_FILE" "$IMAGE_NAME"
+
+      - name: Push boot media to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: release_artifacts/**/*
