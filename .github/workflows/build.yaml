@@ -76,8 +76,8 @@ jobs:
             -v /dev:/dev \
             -v $PWD/_out/${{ matrix.variant }}:/out \
             -v $PWD/_out:/secureboot:ro \
-            ghcr.io/siderolabs/imager:${{ env.TALOS_VERSION }} \
-            --arch "${{ env.ARCH }}" \
+            ghcr.io/siderolabs/imager:$TALOS_VERSION \
+            --arch $ARCH \
             --platform=metal \
             $ARGS
             ${{ matrix.variant }}
