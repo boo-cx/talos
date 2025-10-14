@@ -28,21 +28,21 @@ jobs:
         run: |
           yq -o props '.' *.env >> $GITHUB_ENV
 
-      - name: Set static extra kernel args
-        run: >
+      - name: Set static extra kernel args, trim whitespace
+        run: |
           EXTRA_KERNEL_ARGS="\
             --extra-kernel-arg net.ifnames=0 \
             --extra-kernel-arg ip=:::::eth0:off \
             --extra-kernel-arg ip=:::::eth1:off"
-          echo "EXTRA_KERNEL_ARGS=$EXTRA_KERNEL_ARGS" >> $GITHUB_ENV
+          echo "EXTRA_KERNEL_ARGS=$(echo $EXTRA_KERNEL_ARGS)" >> $GITHUB_ENV
 
-      - name: Set platform-specific config
+      - name: Set platform-specific config, strip comments
         run: |
           PLATFORM_CONFIG=""
           if [ "${{ matrix.variant }}" = "iso" ]; then
-            PLATFORM_CONFIG="--meta=0xa=$(cat ./platform/metal-edge.yaml)"
+            PLATFORM_CONFIG="--meta=0xa=$(grep -v '^#' ./platform/metal-edge.yaml | tr -d '\n')"
           elif [ "${{ matrix.variant }}" = "secureboot" ]; then
-            PLATFORM_CONFIG="--meta=0xa=$(cat ./platform/metal-home.yaml)"
+            PLATFORM_CONFIG="--meta=0xa=$(grep -v '^#' ./platform/metal-home.yaml | tr -d '\n')"
           fi
           echo "PLATFORM_CONFIG=$PLATFORM_CONFIG" >> $GITHUB_ENV
 
