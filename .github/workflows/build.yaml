@@ -56,7 +56,7 @@ jobs:
         run: |
           EXTENSIONS=""
           if [ -f ./extensions/system-extensions.yaml ]; then
-            EXTENSIONS=$(yq -r '.systemExtensions[] | "--system-extension-image " + @sh' system-extensions.yaml | xargs)
+            EXTENSIONS=$(yq -r '.systemExtensions[] | "--system-extension-image " + @sh' ./extensions/system-extensions.yaml | xargs)
           fi
           echo "EXTENSIONS=$EXTENSIONS" >> $GITHUB_ENV
 
