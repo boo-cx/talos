@@ -99,16 +99,6 @@ jobs:
         with:
           path: release_artifacts
 
-      - name: Create and push tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git tag -a "$TALOS_VERSION" -m "Release $TALOS_VERSION"
-          git push origin "$TALOS_VERSION"
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -124,7 +114,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_TOKEN }}
 
-      - name: Push installer image to GHCR
+      - name: Push separate installer image to GHCR for consumption by Talos upgrades
         run: |
           INSTALLER_FILE="release_artifacts/installer/installer-amd64.tar"
           IMAGE_NAME="ghcr.io/${{ github.actor }}/talos/installer-amd64:${{ github.ref_name }}"
