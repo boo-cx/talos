@@ -105,20 +105,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create tag if triggered manually
-            if: github.event_name == 'workflow_dispatch'
-            env:
-              GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-            run: |
-              git config user.name "github-actions[bot]"
-              git config user.email "github-actions[bot]@users.noreply.github.com"
-              
-              if git rev-parse "${TALOS_VERSION}" >/dev/null 2>&1; then
-                echo "Tag ${TALOS_VERSION} already exists."
-              else
-                git tag -a "${TALOS_VERSION}" -m "Release ${TALOS_VERSION}"
-                git push origin "${TALOS_VERSION}"
-              fi
+      - name: Create tag if manually triggered
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          if git rev-parse "${TALOS_VERSION}" >/dev/null 2>&1; then
+             echo "Tag ${TALOS_VERSION} already exists."
+          else
+             git tag -a "${TALOS_VERSION}" -m "Release ${TALOS_VERSION}"
+             git push origin "${TALOS_VERSION}"
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
