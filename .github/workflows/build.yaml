@@ -72,7 +72,7 @@ jobs:
           if [ $VARIANT != "installer" ]; then
             ARGS+=" $PLATFORM_CONFIG $EXTRA_KERNEL_ARGS $EXTENSIONS $EXTENSIONS_ENV"
           fi
-
+          set -x
           docker run --rm -t \
             -v /dev:/dev \
             -v $PWD/_out/${{ matrix.variant }}:/out \
