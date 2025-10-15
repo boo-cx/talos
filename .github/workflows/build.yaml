@@ -47,9 +47,9 @@ jobs:
         run: |
           PLATFORM_CONFIG=""
           if [ "${{ matrix.variant }}" = "iso" ]; then
-            echo "PLATFORM_CONFIG="--meta=0xa=@/workspace/platform/metal-edge.yaml"
+            echo "PLATFORM_CONFIG=--meta=0xa=@/workspace/platform/metal-edge.yaml"
           elif [ "${{ matrix.variant }}" = "secureboot" ]; then
-            echo PLATFORM_CONFIG="--meta=0xa=@/workspace/platform/metal-home.yaml"
+            echo "PLATFORM_CONFIG=--meta=0xa=@/workspace/platform/metal-home.yaml"
           fi
 
       - name: Read list of System Extensions
