@@ -83,6 +83,7 @@ jobs:
           fi
           
           docker run --rm -t \
+            --privileged \
             -v /dev:/dev \
             -v $PWD:/workspace \
             -v $PWD/_out/${{ matrix.variant }}:/out \
