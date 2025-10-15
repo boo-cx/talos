@@ -80,7 +80,7 @@ jobs:
             ghcr.io/siderolabs/imager:$TALOS_VERSION \
             --arch $ARCH \
             --platform=metal \
-            $ARGS
+            $ARGS \
             ${{ matrix.variant }}
 
       - name: Upload Talos image artifact
