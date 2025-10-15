@@ -83,7 +83,7 @@ jobs:
             ${{ matrix.variant }}
 
       - name: Upload Talos image artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
          name: ${{ matrix.variant }}
          path: _out/${{ matrix.variant }}
@@ -95,7 +95,7 @@ jobs:
 
     steps:
       - name: Download all image artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: release_artifacts
 
@@ -106,9 +106,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Test crane auth
-        run: crane auth login ghcr.io -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}" && echo "OK"
-
       - name: Push installer image to GHCR
         run: |
           INSTALLER_FILE="release_artifacts/installer/installer-amd64.tar"
@@ -116,6 +113,7 @@ jobs:
 
           go install github.com/google/go-containerregistry/cmd/crane@latest
           export PATH="$PATH:$(go env GOPATH)/bin"
+          crane auth login ghcr.io -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}" && echo "OK"
           crane push "$INSTALLER_FILE" "$IMAGE_NAME"
 
       - name: Push boot media to GitHub Release
