@@ -17,7 +17,7 @@ jobs:
       version: ${{ steps.build_variables.outputs.version }}
     strategy:
       matrix:
-        variant: [installer, iso, secureboot]
+        variant: [installer, iso, secureboot-metal]
 
     steps:
       - name: Checkout code
