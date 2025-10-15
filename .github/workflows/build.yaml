@@ -47,9 +47,9 @@ jobs:
         run: |
           PLATFORM_CONFIG=""
           if [ "${{ matrix.variant }}" = "iso" ]; then
-            PLATFORM_CONFIG="--meta=0xa=$(grep -v '^#' ./platform/metal-edge.yaml | base64 -w0)"
+            PLATFORM_CONFIG="--meta=0xa=@platform/metal-edge.yaml"
           elif [ "${{ matrix.variant }}" = "secureboot" ]; then
-            PLATFORM_CONFIG="--meta=0xa=$(grep -v '^#' ./platform/metal-home.yaml | base64 -w0)"
+            PLATFORM_CONFIG="--meta=0xa=@platform/metal-home.yaml"
           fi
           echo "PLATFORM_CONFIG=$PLATFORM_CONFIG" >> $GITHUB_ENV
 
