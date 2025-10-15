@@ -13,6 +13,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.build_variables.outputs.version }}
     strategy:
       matrix:
         variant: [installer, iso]
@@ -25,7 +27,10 @@ jobs:
         run: mkdir -p _out/${{ matrix.variant }}
 
       - name: Load build variables
-        run: cat build.env >> $GITHUB_ENV
+        id: build_variables
+        run: |
+          cat build.env >> $GITHUB_ENV
+          echo "version=${TALOS_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Set static extra kernel args, trim whitespace
         run: |
@@ -94,31 +99,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download all image artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: release_artifacts
-
       - name: Checkout code if manually triggered
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Create tag if manually triggered
+      - name: Load TALOS_VERSION from build outputs
+        run: echo "TALOS_VERSION=${{ needs.build.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Create or update tag if triggered manually
         if: github.event_name == 'workflow_dispatch'
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
+          set -euo pipefail
+      
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+      
+          # Make sure we have all tags
+          git fetch --tags
+
           if git rev-parse "${TALOS_VERSION}" >/dev/null 2>&1; then
-             echo "Tag ${TALOS_VERSION} already exists."
+            echo "Tag ${TALOS_VERSION} already exists. Replacing..."
+            git tag -d "${TALOS_VERSION}" || true
+            git push origin ":refs/tags/${TALOS_VERSION}" || true
           else
-             git tag -a "${TALOS_VERSION}" -m "Release ${TALOS_VERSION}"
-             git push origin "${TALOS_VERSION}"
+            echo "Creating new tag ${TALOS_VERSION}"
           fi
+
+          git tag -a "${TALOS_VERSION}" -m "Release ${TALOS_VERSION}"
+          git push origin "${TALOS_VERSION}"
+
+      - name: Download all image artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_artifacts
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
