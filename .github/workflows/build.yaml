@@ -106,6 +106,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Test crane auth
+        run: crane auth login ghcr.io -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}" && echo "OK"
+
       - name: Push installer image to GHCR
         run: |
           INSTALLER_FILE="release_artifacts/installer/installer-amd64.tar"
