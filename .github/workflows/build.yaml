@@ -29,6 +29,9 @@ jobs:
       - name: Load build variables
         id: build_variables
         run: |
+          set -a
+          source build.env
+          set +a
           cat build.env >> $GITHUB_ENV
           echo "version=${TALOS_VERSION}" >> $GITHUB_OUTPUT
 
