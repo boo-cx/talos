@@ -113,7 +113,6 @@ jobs:
 
           go install github.com/google/go-containerregistry/cmd/crane@latest
           export PATH="$PATH:$(go env GOPATH)/bin"
-          crane auth login ghcr.io -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}" && echo "OK"
           crane push "$INSTALLER_FILE" "$IMAGE_NAME"
 
       - name: Push boot media to GitHub Release
