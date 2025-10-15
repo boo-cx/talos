@@ -71,7 +71,7 @@ jobs:
           if [ $VARIANT != "installer" ]; then
             ARGS+=" $PLATFORM_CONFIG $EXTRA_KERNEL_ARGS $EXTENSIONS $EXTENSIONS_ENV"
           fi
-          set -x
+
           docker run --rm -t \
             -v /dev:/dev \
             -v $PWD/_out/${{ matrix.variant }}:/out \
@@ -90,7 +90,7 @@ jobs:
 
   release:
     needs: build
-    if: github.ref_type == 'tag'
+    if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
@@ -100,7 +100,6 @@ jobs:
           path: release_artifacts
 
       - name: Push installer image to GHCR
-        if: matrix.variant == 'installer'
         run: |
           INSTALLER_FILE="_out/installer/installer-amd64.tar"
           IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/installer-amd64:${{ github.ref_name }}"
