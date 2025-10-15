@@ -99,9 +99,14 @@ jobs:
         with:
           path: release_artifacts
 
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Push installer image to GHCR
-        env: >-
-          CRANE_AUTH: {"auths":{"ghcr.io":{"username":"${{ github.actor }}","password":"${{ secrets.GITHUB_TOKEN }}"}}}
         run: |
           INSTALLER_FILE="release_artifacts/installer/installer-amd64.tar"
           IMAGE_NAME="ghcr.io/${{ github.actor }}/installer-amd64:${{ github.ref_name }}"
