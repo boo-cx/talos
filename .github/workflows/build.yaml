@@ -17,7 +17,7 @@ jobs:
       version: ${{ steps.build_variables.outputs.version }}
     strategy:
       matrix:
-        variant: [installer, iso]
+        variant: [installer, iso, secureboot]
 
     steps:
       - name: Checkout code
@@ -47,11 +47,10 @@ jobs:
         run: |
           PLATFORM_CONFIG=""
           if [ "${{ matrix.variant }}" = "iso" ]; then
-            PLATFORM_CONFIG="--meta=0xa=@platform/metal-edge.yaml"
+            echo "PLATFORM_CONFIG="--meta=0xa=@/workspace/platform/metal-edge.yaml"
           elif [ "${{ matrix.variant }}" = "secureboot" ]; then
-            PLATFORM_CONFIG="--meta=0xa=@platform/metal-home.yaml"
+            echo PLATFORM_CONFIG="--meta=0xa=@/workspace/platform/metal-home.yaml"
           fi
-          echo "PLATFORM_CONFIG=$PLATFORM_CONFIG" >> $GITHUB_ENV
 
       - name: Read list of System Extensions
         run: |
@@ -82,6 +81,7 @@ jobs:
 
           docker run --rm -t \
             -v /dev:/dev \
+            -v $PWD:/workspace
             -v $PWD/_out/${{ matrix.variant }}:/out \
             -v $PWD/_out:/secureboot:ro \
             ghcr.io/siderolabs/imager:$TALOS_VERSION \
