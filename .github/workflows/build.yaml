@@ -102,16 +102,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Load TALOS_VERSION from build outputs
+        run: echo "TALOS_VERSION=${{ needs.build.outputs.version }}" >> $GITHUB_ENV
+
       - name: Checkout code if manually triggered
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Load TALOS_VERSION from build outputs
-        run: echo "TALOS_VERSION=${{ needs.build.outputs.version }}" >> $GITHUB_ENV
-
-      - name: Create or update tag if triggered manually
+      - name: Create or replace tag if triggered manually
         if: github.event_name == 'workflow_dispatch'
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -121,7 +121,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
-          # Make sure we have all tags
           git fetch --tags
 
           if git rev-parse "${TALOS_VERSION}" >/dev/null 2>&1; then
@@ -158,7 +157,7 @@ jobs:
       - name: Push separate installer image to GHCR for consumption by Talos upgrades
         run: |
           INSTALLER_FILE="release_artifacts/installer/installer-amd64.tar"
-          IMAGE_NAME="ghcr.io/${{ github.actor }}/talos/installer-amd64:${{ github.ref_name }}"
+          IMAGE_NAME="ghcr.io/${{ github.actor }}/talos/installer-amd64:${TALOS_VERSION}"
 
           go install github.com/google/go-containerregistry/cmd/crane@latest
           export PATH="$PATH:$(go env GOPATH)/bin"
