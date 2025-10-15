@@ -17,7 +17,7 @@ jobs:
       version: ${{ steps.build_variables.outputs.version }}
     strategy:
       matrix:
-        variant: [installer, iso, secureboot-metal]
+        variant: [installer, iso, metal]
 
     steps:
       - name: Checkout code
@@ -48,7 +48,7 @@ jobs:
           PLATFORM_CONFIG=""
           if [ "${{ matrix.variant }}" = "iso" ]; then
             echo "PLATFORM_CONFIG=--meta=0xa=@/workspace/platform/metal-edge.yaml"
-          elif [ "${{ matrix.variant }}" = "secureboot" ]; then
+          elif [ "${{ matrix.variant }}" = "secureboot-metal" ] || [ "${{ matrix.variant }}" = "metal" ]; then
             echo "PLATFORM_CONFIG=--meta=0xa=@/workspace/platform/metal-home.yaml"
           fi
 
