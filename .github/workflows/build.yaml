@@ -109,7 +109,7 @@ jobs:
       - name: Push installer image to GHCR
         run: |
           INSTALLER_FILE="release_artifacts/installer/installer-amd64.tar"
-          IMAGE_NAME="ghcr.io/${{ github.actor }}/installer-amd64:${{ github.ref_name }}"
+          IMAGE_NAME="ghcr.io/${{ github.actor }}/talos/installer-amd64:${{ github.ref_name }}"
 
           go install github.com/google/go-containerregistry/cmd/crane@latest
           export PATH="$PATH:$(go env GOPATH)/bin"
