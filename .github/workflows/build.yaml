@@ -46,11 +46,14 @@ jobs:
       - name: Set platform-specific config, strip comments
         run: |
           PLATFORM_CONFIG=""
-          if [ "${{ matrix.variant }}" = "iso" ]; then
-            echo "PLATFORM_CONFIG=--meta=0xa=@/workspace/platform/metal-edge.yaml"
-          elif [ "${{ matrix.variant }}" = "secureboot-metal" ] || [ "${{ matrix.variant }}" = "metal" ]; then
-            echo "PLATFORM_CONFIG=--meta=0xa=@/workspace/platform/metal-home.yaml"
-          fi
+          case "${{ matrix.variant }}" in
+            iso)
+              echo "PLATFORM_CONFIG=--meta=0xa=@/workspace/platform/metal-edge.yaml"
+              ;;
+            secureboot-metal|metal)
+              echo "PLATFORM_CONFIG=--meta=0xa=@/workspace/platform/metal-home.yaml"
+              ;;
+          esac
 
       - name: Read list of System Extensions
         run: |
