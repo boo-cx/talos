@@ -43,7 +43,7 @@ jobs:
             --extra-kernel-arg ip=:::::eth1:off"
           echo "EXTRA_KERNEL_ARGS=$(echo $EXTRA_KERNEL_ARGS)" >> $GITHUB_ENV
 
-      - name: Set platform-specific config, strip comments
+      - name: Set platform-specific config
         run: |
           PLATFORM_CONFIG=""
           case "${{ matrix.variant }}" in
